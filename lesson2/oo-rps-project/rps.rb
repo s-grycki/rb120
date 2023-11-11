@@ -1,41 +1,4 @@
 =begin
-Text description of Rock, Paper, Scissors, Lizard, Spock:
-Rock, Paper, Scissors, Lizard, Spock is a two-player game where each player
-chooses one of five possible moves: rock, paper, scissors, lizard or spock.
-The chosen moves will then be compared to see who wins a round,
-according to the following rules:
-
-- rock beats scissors & lizard
-- scissors beats paper & lizard
-- paper beats rock & spock
-- lizard beats spock & paper
-- spock beats scissors & rock
-
-If the players chose the same move, then it's a tie.
-
-The first player to a set score wins the game
-
-Major nouns and verbs:
-Nouns(classes): 
-Move(rock, paper, scissors, lizard, spock)
-Player(Human and random computer player)
-Win
-Rules
-Score
-
-Verbs(methods/behaviors): 
-Choose
-Compare
-
-Noun/verb associations:
-Move
-  -compare
-Player
-  -choose
-Win
-Rules
-Score
-
 Extra features to implement:
 -Keep score of wins until a player reaches a certain number (and wins game)
 -Add lizard and spock (5 options instead of 3)
@@ -45,12 +8,23 @@ Extra features to implement:
   Examples: R2D2 likes rock. Hal liks scissors but not paper
 
 CONFIG OPTIONS
-Should allow user to enter set values for options or to start playing
-q => see rules (should be functional at all times)
-w => set win requirement (should be disabled during game)
-e => see move history (should be functional during game and reset after)
-Allow user to reset win requirement if they want to play again
-This prompt should show up at execution run time
+Allows user to override default settings, view options, or to start playing
+Broken into 3 categories:
+Config menu exclusive(functionality available before and after game)
+- View computer player BIOs
+- Change round win target for game win
+Could have a shared dedicated menu to appear before and after a game
+
+Game exclusive(functionaity only available during game)
+- Last move shortcut key
+- Move history
+Could implement these as valid human inputs during game
+
+Universal(always available)
+- View time
+- View rules
+Needs to be avilable anytime a user can enter input (class for messages?)
+
 
 KEEP SCORE
 Need to loop until human or computer wins reaches a set value
@@ -86,10 +60,80 @@ Move choices shouldn't be entirely random. For example:
 R2D2 likes rock. There's a 70% chance they'll choose rock
   But, there's a 30% chance R2D2 chooses something else
 
+OOP PROBLEM SOLVING PROCESS:
+Text description of Rock, Paper, Scissors, Lizard, Spock:
+Rock, Paper, Scissors, Lizard, Spock is a two-player game where each player
+chooses one of five possible moves: rock, paper, scissors, lizard or spock.
+The chosen moves will then be compared to see who wins a round,
+according to the following rules:
 
+- rock beats scissors & lizard
+- scissors beats paper & lizard
+- paper beats rock & spock
+- lizard beats spock & paper
+- spock beats scissors & rock
+
+If the players chose the same move, then it's a tie. The first player to a set
+score wins the game
+
+Before or after the game, the user can view the player bios of the computer
+players and change the default game win target
+(b/bios) for character bios
+(w/wins) for win target
+
+During the game, users can view the move history of both players and use a
+shortcut to select their last choice
+(h/history) for move history
+(l/last) for last move
+
+At any time, a user can view the time or rules of the game
+(t/time) for current time
+(r/rules) for rules
+
+Major nouns and verbs:
+Nouns(classes): 
+Move(rock, paper, scissors, lizard, spock)
+Player(Human and random computer player)
+Win
+Score
+Player BIOs
+Target
+History
+Choice
+Time
+Rules
+
+Verbs(methods/behaviors): 
+Choose
+Compare
+View
+Select
+
+Noun/verb associations:
+Move
+  -compare
+Player
+  -choose
+Choice
+  -select
+History
+  -view
+Time
+  -view
+Rules
+  -view
+Player BIOs
+  -view
+
+Win
+  Score
+  Target
+# Win based on comparing score with target (for whole game)
+# Based on comparing choices (for round)
 =end
 
 # Writing nouns as classes and verbs as methods/behaviors (evolved from spike)
+# Will refactor class heirarchy and UX after new functionality fully operational
 
 require 'pry'
 class Move
@@ -134,6 +178,7 @@ class Player
   def initialize
     set_name
     @win_count = 0
+    @move_history = []
   end
 end
 
@@ -163,12 +208,101 @@ end
 
 class Computer < Player
   def set_name
-    self.name = ['R2D2', 'Hal', 'Chappie', 'Sonny', 'Number 5'].sample
+    self.name = ([R2d2, Hal, Chappie, Sonny, Number_5].sample).new.name
   end
 
   def choose
     self.move = Move.new(Move::VALUES.sample)
   end
+
+  def display_bio; end
+end
+
+module Nameable
+  attr_reader :name
+
+  def initialize
+    @name = self.class.to_s
+  end
+end
+
+class R2d2
+  include Nameable
+  
+  def initialize
+    @name = 'R2D2'
+  end
+
+  def display_bio
+    puts "R2D2 is the widely known and loved droid from Star wars. How does he
+    play this game without any hands? It's actually utilized with R2's ability
+    to project holograms outwards."
+  end
+end
+
+class Hal
+  include Nameable
+
+  def display_bio
+    puts "You may remember Hal as the whimsical dad from the American sitcom
+    Malcolm in the Middle. He has recurring dreams where he shaves his head
+    and makes a living off illicit activities in New Mexico."
+  end
+end
+
+class Chappie
+  include Nameable
+
+  def display_bio
+    puts "Daniel 'Chappie' James Jr. became the first African American 
+    four-star general in 1975. His nickname was handed down to him by his
+    brother. Chappie lived until 1978 at the age of 58."
+  end
+end
+
+class Sonny
+  include Nameable
+
+  def display_bio
+    puts "Sonny Capone is the son of famous American mobster Al Capone - who
+    ruled a crime empire in Chicago. Unlike his father, Sonny, who changed his
+    name later in life, lived a relatively quiet and drama-free life until his
+    death at age 85 in the year 2004."
+  end
+end
+
+class Number_5
+  include Nameable
+
+  def initialize
+    @name = 'Number 5'
+  end
+
+  def display_bio
+    puts "Number 5 was a star character in a Cartoon Network show called
+    Codename Kid's Next Door. Though she prefers going by this codename most
+    of the time, her real name is Abby."
+  end
+end
+
+class History
+  # Create new data structure to add info to
+  # Be able to view this info
+end
+
+class New_Time
+  # Create a time instance when called
+  # Be able to view this info 
+end
+
+class Rules
+  # Store text info on game rules
+  # Be able to view this info
+end
+
+class Player_Bios
+  # Store text info about players
+  # Be able to view this info
 end
 
 # Orchestrate procedural flow of program using associations
@@ -178,22 +312,81 @@ class RPSGame
   def initialize
     @human = Human.new
     @computer = Computer.new
-    @win_requirement = 2
+    @win_requirement = 2 
     display_welcome_message
   end
 
-  def display_welcome_message
-    puts "Welcome to Rock, Paper, Scissors #{human.name}!"
-    puts "Press h during the game to view move history."
-    puts "Press c to enter config menu."
-    puts "Press any other key to begin the game"
+  def clear_screen
+    ((system "cls") | (system "clear")) # multiple OS support
   end
 
-  def display_config_menu
-    puts "Press w to change the win requirement."
-    puts "Press t to see the time"
-    puts "Press c to learn about computer players"
-    puts "Press r to view the rules"
+  def display_welcome_message
+    clear_screen
+    puts "Welcome to Rock, Paper, Scissors #{human.name}!"
+    puts "Enter (rules/r) to view rules, shortcuts, and features"
+    puts "Enter any other key to begin game"
+    get_nongame_input
+  end
+
+  def get_nongame_input
+    answer = gets.chomp.downcase
+    case answer
+    when 'rules', 'r' then display_rules
+    when 'wins', 'w' then change_win_requirement
+    when 'time', 't' then display_time
+    when 'bios', 'b' then display_character_bios
+    else play
+    end
+  end
+
+  def display_rules
+    rules = <<-HEREDOC
+    Rock, Paper, Scissors, Lizard, Spock is a two-player game where each player
+    chooses one of five possible moves: rock, paper, scissors, lizard or spock.
+    The chosen moves will then be compared to see who wins a round,
+    according to the following rules:
+
+    - rock beats scissors & lizard
+    - scissors beats paper & lizard
+    - paper beats rock & spock
+    - lizard beats spock & paper
+    - spock beats scissors & rock
+
+    If the players chose the same move, then it's a tie. The first player to a set
+    score wins the game
+
+    Before or after the game, the user can view the player bios of the computer
+    players and change the default game win target
+    (b/bios) for character bios
+    (w/wins) for win target
+
+    During the game, users can view the move history of both players and use a
+    shortcut to select their last choice
+    (h/history) for move history
+    (l/last) for last move
+
+    At any time, a user can view the time or rules of the game
+    (t/time) for current time
+    (r/rules) for rules
+    HEREDOC
+
+    puts rules
+    gets
+    display_welcome_message
+  end
+
+  def display_time
+    puts Time.new.localtime
+    gets
+    display_welcome_message
+  end
+  
+  def display_character_bios
+    [R2d2, Hal, Chappie, Sonny, Number_5].each do |class_name|
+      class_name.new.display_bio
+    end
+    gets
+    display_welcome_message
   end
 
   def display_goodbye_message
@@ -258,7 +451,7 @@ class RPSGame
     end
 
     self.win_requirement = answer.to_i
-    play_again
+    display_welcome_message
   end
 
   def someone_won?
@@ -268,6 +461,7 @@ class RPSGame
 
   def play
     until someone_won?
+      binding.pry
       human.choose
       computer.choose
       display_moves
