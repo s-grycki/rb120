@@ -16,9 +16,8 @@ Config menu exclusive(functionality available before and after game)
 Could have a shared dedicated menu to appear before and after a game
 
 Game exclusive(functionaity only available during game)
-- Last move shortcut key
 - Move history
-Could implement these as valid human inputs during game
+Could implement as valid human input during game
 
 Universal(always available)
 - View time
@@ -81,64 +80,395 @@ players and change the default game win target
 (b/bios) for character bios
 (w/wins) for win target
 
-During the game, users can view the move history of both players and use a
-shortcut to select their last choice
+During the game, users can view the move history of both players and view the
+bio of the current computer player
 (h/history) for move history
-(l/last) for last move
+(b/bio) for (individual) character bio
 
 At any time, a user can view the time or rules of the game
 (t/time) for current time
-(r/rules) for rules
+(rules) for rules *reserving r shortcut for rock
 
-Major nouns and verbs:
-Nouns(classes): 
-Move(rock, paper, scissors, lizard, spock)
-Player(Human and random computer player)
-Win
-Score
-Player BIOs
-Target
-History
-Choice
-Time
-Rules
+Basic Procedure:
+Pre-Game(behavior only on initial bootup)
+Create a new human player
+Create a new computer player
+Set an initial win requirement
 
-Verbs(methods/behaviors): 
-Choose
-Compare
-View
-Select
+Display the welcome message
+Allow for pregame configuration if certain strings input and return to welcome message
+Else begin game
 
-Noun/verb associations:
-Move
-  -compare
+Game(dynamic behavior during rounds)
+Ask human for game choice
+Set move of human to input if rock, paper, scissors, lizard, or spock
+Add move to human move history
+Display option if valid option input(history, time, rules, bio) and reprompt for input until valid move
+Display error if invalid input and reprompt for input until valid move
+
+Set move of computer to random move choice
+Add move to computer move history
+
+Display the moves picked by both human and computer
+
+Compare moves
+Display player won if their move beats computer and increment player win count by 1
+Display computer won if their move beats player and increment computer win count by 1
+Display tie if neither win
+
+Display current game win count
+Perform another round unless player or computer has a win count of the requirement
+
+Post Game(behavior after every game)
+Display the player who reached the win requirement with a victory message
+
+Ask if human wants to play again
+If so, then reset wins and repeat process starting at main game
+Else display exit message and quit program
+
+Preliminary Associations:
+Displayable Messages
+  welcome message
+  errors
+  time
+  bios
+  history
+  rules
+  human win count
+  computer win count
+  human wins round
+  computer wins round
+  game winner
+  play again?
+
+Promptable Inputs (Human exclusive behavior)
+  welcome input
+  game input
+  post game input
+
 Player
-  -choose
-Choice
-  -select
-History
-  -view
-Time
-  -view
-Rules
-  -view
-Player BIOs
-  -view
+  move history
 
-Win
-  Score
-  Target
-# Win based on comparing score with target (for whole game)
-# Based on comparing choices (for round)
+Human < Player
+  name
+  win count
+  current move
+  move history
+
+Computer < Player
+  win count
+  current move
+  move history
+  name
+
+Game
+  win requirement
+  compare moves
+
 =end
 
 # Writing nouns as classes and verbs as methods/behaviors (evolved from spike)
-# Will refactor class heirarchy and UX after new functionality fully operational
+# First draft of operational program
+# Needs to be refactored and permissions set within classes
 
 require 'pry'
-class Move
-  VALUES = %w(rock paper scissors)
+require 'yaml'
+MESSAGES = YAML.load_file('rps_messages.yml')
 
+module Displayable
+  def clear_screen
+    ((system "cls") | (system "clear")) # multiple OS support
+  end
+
+  def display_welcome_message
+    clear_screen
+    puts "Welcome to Rock, Paper, Scissors, Lizard, Spock #{human.name}!"
+    puts "Please enter (rules/ru) to see the game rules and options"
+    puts "Press any other key to begin game"
+  end
+
+  def display_error(error)
+    messages = {
+      name: 'Please enter a valid name',
+      integer: 'Please enter a valid number greater than 0',
+      move: 'Please enter a valid game move'
+    }
+
+    puts messages[error]
+  end
+
+  def display_time
+    puts Time.new
+    gets
+  end
+
+  def display_rules
+    puts MESSAGES['rules']
+    gets
+  end
+
+  def display_win_count
+    puts "#{human.name} has #{human.win_count} wins"
+    puts "#{computer.name} has #{computer.win_count} wins"
+  end
+
+  def display_round_winner
+    if human.move > computer.move
+      puts "#{human.name} won!"
+      human.win_count += 1
+    elsif human.move < computer.move
+      puts "#{computer.name} won!"
+      computer.win_count += 1
+    else
+      puts "It's a tie!"
+    end
+  end
+
+  def display_game_winner
+    puts "#{human.name} wins!" if human.win_count >= win_requirement.number
+    puts "#{computer.name} wins!" if computer.win_count >= win_requirement.number
+  end
+
+  def display_play_again
+    "Would you like to play again?"
+  end
+
+  def display_bio(name)
+    puts MESSAGES['bios']["#{name}"]
+  end
+
+  def display_moves
+    puts "#{human.name} chose: #{human.move}"
+    puts "#{computer.name} chose: #{computer.move}"
+  end
+
+  def display_goodbye_message
+    puts "Thanks for playing. Goodbye!"
+  end
+end
+
+module Getable
+  def get_pregame_input
+    answer = gets.chomp.downcase
+    if valid_pregame_option?(answer)
+      call_options(answer)
+      pregame
+    end
+  end 
+
+  def call_options(answer)
+    case answer
+    when 'ru', 'rules' then display_rules
+    when 't', 'time' then display_time
+    when 'w', 'wins' then win_requirement.change_win_target
+    when 'b', 'bio' then display_bio(RPSLSGame.get_computer_name)
+    when 'h', 'history' then History.view
+    when 'y', 'yes' then play
+    when 'n', 'no' then display_goodbye_message
+    end
+  end
+
+  def valid_pregame_option?(answer)
+    answer.match?(/\A(ru|rules|t|time|w|wins)\z/)
+  end
+
+  def play_again
+    loop do
+      puts "Would you like to play again? (y/n)"
+      answer = gets.chomp.downcase
+      if valid_postgame_option?(answer)
+        call_options(answer)
+        break
+      end
+      puts "Sorry, must answer yes or no."
+    end
+  end
+
+  def valid_postgame_option?(answer)
+    answer.match?(/\A(y|yes|n|no)\z/)
+  end
+
+  def get_postgame_input
+  end
+end
+
+class Player
+  include Getable
+  include Displayable
+  attr_accessor :name, :move, :win_count
+
+  def initialize
+    @name = set_name
+    @win_count = 0
+  end
+end
+
+class Human < Player
+  def set_name
+    loop do
+      puts 'Please enter your name:'
+      answer = gets.chomp
+      answer = valid_name?(answer) ? format_name(answer) : display_error(:name)
+      break self.name unless answer.nil?
+    end
+  end
+
+  def format_name(answer)
+    self.name = answer.split.map(&:capitalize).join(' ')
+  end
+
+  def valid_name?(answer)
+    answer.match?(/\A[a-z]+/i)
+  end
+
+  def choose
+    loop do
+      puts 'Please enter rock, paper, scissors, lizard or spock:'
+      answer = gets.chomp.downcase
+      clear_screen
+      validate_choice(answer)
+      break if valid_move?(answer)
+    end
+  end
+
+  def validate_choice(answer)
+    if valid_move?(answer)
+      self.move = Move.new(answer)
+      History.update_history(self.name, answer)
+    elsif valid_game_option?(answer)
+      call_options(answer)
+    else
+      display_error(:move)
+    end
+  end
+
+  def valid_move?(answer)
+    answer.match?(/\A(r|rock|p|paper|sc|scissors|l|lizard|sp|spock)\z/)
+  end
+
+  def valid_game_option?(answer)
+    answer.match?(/\A(ru|rules|t|time|b|bio|h|history)\z/)
+  end
+end
+
+class Computer < Player
+  def set_name
+    @name = self.class.to_s
+  end
+
+  def set_move(answer)
+    self.move = Move.new(answer)
+    History.update_history(self.name, answer)
+  end
+end
+
+class R2D2 < Computer
+  def choose
+    choice = case rand(101)
+    when 0..70 then 'rock'
+    when 71..85 then 'paper'
+    when 86..90 then 'lizard'
+    when 91..100 then 'spock'
+    end
+
+    set_move(choice)
+  end
+
+end
+
+class Hal < Computer
+  def choose
+    choice = case rand(101)
+    when 0..20 then 'rock'
+    when 21..30 then 'paper'
+    when 31..90 then 'scissors'
+    when 91..100 then 'lizard'
+    end
+
+    set_move(choice)
+  end
+end
+
+class Chappie < Computer
+  def choose
+    choice = case rand(101)
+    when 0..25 then 'rock'
+    when 26..35 then 'paper'
+    when 36..40 then 'scissors'
+    when 41..100 then 'spock'
+    end
+
+    set_move(choice)
+  end
+end
+
+class Sonny < Computer
+  def choose
+    choice = case rand(101)
+    when 0..50 then 'paper'
+    when 51..65 then 'scissors'
+    when 66..80 then 'lizard'
+    when 81..100 then 'spock'
+    end
+
+    set_move(choice)
+  end
+end
+
+class Number5 < Computer
+  def set_name
+    @name = 'Number 5'
+  end
+
+  def choose
+    choice = case rand(101)
+    when 0..5 then 'rock'
+    when 6..15 then 'scissors'
+    when 16..80 then 'lizard'
+    when 81..100 then 'spock'
+    end
+
+    set_move(choice)
+  end
+end
+
+class Target
+  attr_accessor :number
+  include Displayable
+
+  def initialize
+    @number = 3
+  end
+
+  def change_win_target
+    loop do
+      puts "The current target is #{number}"
+      puts "What would you like to change it to?"
+      answer = gets.chomp.to_i
+      self.number = answer if answer > 0
+      break if answer > 0
+      display_error(:integer)
+    end
+  end
+end
+
+class History
+  def initialize(human, computer)
+    @@view = [human, computer].map { |name| [name, []] }.to_h
+  end
+
+  def self.update_history(player, move)
+    @@view[player] << move
+  end
+
+  def self.view
+    @@view.each do |name, moves|
+      puts "#{name} has made the moves: #{moves.join(', ')}"
+    end
+  end  
+end
+
+class Move
   def initialize(value)
     @value = value
   end
@@ -155,16 +485,28 @@ class Move
     @value == 'paper'
   end
 
+  def lizard?
+    @value == 'lizard'
+  end
+
+  def spock?
+    @value == 'spock'
+  end
+
   def >(other_move)
-    (rock? && other_move.scissors?) ||
-      (paper? && other_move.rock?) ||
-      (scissors? && other_move.paper?)
+    rock? && (other_move.scissors? || other_move.lizard?) ||
+      paper? && (other_move.rock? || other_move.spock?) ||
+      scissors? && (other_move.paper? || other_move.lizard?) ||
+      lizard? && (other_move.spock? || other_move.paper?) ||
+      spock? && (other_move.scissors? || other_move.rock?)
   end
 
   def <(other_move)
-    (rock? && other_move.paper?) ||
-      (paper? && other_move.scissors?) ||
-      (scissors? && other_move.rock?)
+    rock? && (other_move.paper? || other_move.spock?) ||
+      paper? && (other_move.scissors? || other_move.lizard?) ||
+      scissors? && (other_move.rock? || other_move.spock?) ||
+      lizard? && (other_move.rock? || other_move.scissors?) ||
+      spock? && (other_move.lizard? || other_move.paper?)
   end
 
   def to_s
@@ -172,252 +514,29 @@ class Move
   end
 end
 
-class Player
-  attr_accessor :move, :name, :win_count
 
-  def initialize
-    set_name
-    @win_count = 0
-    @move_history = []
-  end
-end
 
-class Human < Player
-  def set_name
-    n = ""
-    loop do
-      puts "What's your name?"
-      n = gets.chomp.capitalize
-      break unless n.empty?
-      puts "Sorry, must enter a value"
-    end
-    self.name = n
-  end
-
-  def choose
-    choice = nil
-    loop do
-      puts "Please choose rock, paper, or scissors:"
-      choice = gets.chomp.downcase
-      break if Move::VALUES.include?(choice)
-      puts "Sorry, invalid choice."
-    end
-    self.move = Move.new(choice)
-  end
-end
-
-class Computer < Player
-  def set_name
-    self.name = ([R2d2, Hal, Chappie, Sonny, Number_5].sample).new.name
-  end
-
-  def choose
-    self.move = Move.new(Move::VALUES.sample)
-  end
-
-  def display_bio; end
-end
-
-module Nameable
-  attr_reader :name
-
-  def initialize
-    @name = self.class.to_s
-  end
-end
-
-class R2d2
-  include Nameable
-  
-  def initialize
-    @name = 'R2D2'
-  end
-
-  def display_bio
-    puts "R2D2 is the widely known and loved droid from Star wars. How does he
-    play this game without any hands? It's actually utilized with R2's ability
-    to project holograms outwards."
-  end
-end
-
-class Hal
-  include Nameable
-
-  def display_bio
-    puts "You may remember Hal as the whimsical dad from the American sitcom
-    Malcolm in the Middle. He has recurring dreams where he shaves his head
-    and makes a living off illicit activities in New Mexico."
-  end
-end
-
-class Chappie
-  include Nameable
-
-  def display_bio
-    puts "Daniel 'Chappie' James Jr. became the first African American 
-    four-star general in 1975. His nickname was handed down to him by his
-    brother. Chappie lived until 1978 at the age of 58."
-  end
-end
-
-class Sonny
-  include Nameable
-
-  def display_bio
-    puts "Sonny Capone is the son of famous American mobster Al Capone - who
-    ruled a crime empire in Chicago. Unlike his father, Sonny, who changed his
-    name later in life, lived a relatively quiet and drama-free life until his
-    death at age 85 in the year 2004."
-  end
-end
-
-class Number_5
-  include Nameable
-
-  def initialize
-    @name = 'Number 5'
-  end
-
-  def display_bio
-    puts "Number 5 was a star character in a Cartoon Network show called
-    Codename Kid's Next Door. Though she prefers going by this codename most
-    of the time, her real name is Abby."
-  end
-end
-
-class History
-  # Create new data structure to add info to
-  # Be able to view this info
-end
-
-class New_Time
-  # Create a time instance when called
-  # Be able to view this info 
-end
-
-class Rules
-  # Store text info on game rules
-  # Be able to view this info
-end
-
-class Player_Bios
-  # Store text info about players
-  # Be able to view this info
-end
-
-# Orchestrate procedural flow of program using associations
-class RPSGame
-  attr_accessor :human, :computer, :win_requirement
+class RPSLSGame
+  include Displayable
+  include Getable
+  attr_reader :name, :computer
+  attr_accessor :win_requirement, :human, :choice, :history
 
   def initialize
     @human = Human.new
-    @computer = Computer.new
-    @win_requirement = 2 
-    display_welcome_message
+    @computer = Computer.subclasses.sample.new
+    @@name = computer.class
+    @win_requirement = Target.new
+    @history = History.new(human.name, computer.name)
   end
 
-  def clear_screen
-    ((system "cls") | (system "clear")) # multiple OS support
+  def someone_won?
+    (human.win_count >= win_requirement.number) ||
+    computer.win_count >= win_requirement.number
   end
 
-  def display_welcome_message
-    clear_screen
-    puts "Welcome to Rock, Paper, Scissors #{human.name}!"
-    puts "Enter (rules/r) to view rules, shortcuts, and features"
-    puts "Enter any other key to begin game"
-    get_nongame_input
-  end
-
-  def get_nongame_input
-    answer = gets.chomp.downcase
-    case answer
-    when 'rules', 'r' then display_rules
-    when 'wins', 'w' then change_win_requirement
-    when 'time', 't' then display_time
-    when 'bios', 'b' then display_character_bios
-    else play
-    end
-  end
-
-  def display_rules
-    rules = <<-HEREDOC
-    Rock, Paper, Scissors, Lizard, Spock is a two-player game where each player
-    chooses one of five possible moves: rock, paper, scissors, lizard or spock.
-    The chosen moves will then be compared to see who wins a round,
-    according to the following rules:
-
-    - rock beats scissors & lizard
-    - scissors beats paper & lizard
-    - paper beats rock & spock
-    - lizard beats spock & paper
-    - spock beats scissors & rock
-
-    If the players chose the same move, then it's a tie. The first player to a set
-    score wins the game
-
-    Before or after the game, the user can view the player bios of the computer
-    players and change the default game win target
-    (b/bios) for character bios
-    (w/wins) for win target
-
-    During the game, users can view the move history of both players and use a
-    shortcut to select their last choice
-    (h/history) for move history
-    (l/last) for last move
-
-    At any time, a user can view the time or rules of the game
-    (t/time) for current time
-    (r/rules) for rules
-    HEREDOC
-
-    puts rules
-    gets
-    display_welcome_message
-  end
-
-  def display_time
-    puts Time.new.localtime
-    gets
-    display_welcome_message
-  end
-  
-  def display_character_bios
-    [R2d2, Hal, Chappie, Sonny, Number_5].each do |class_name|
-      class_name.new.display_bio
-    end
-    gets
-    display_welcome_message
-  end
-
-  def display_goodbye_message
-    puts "Thanks for playing Rock, Paper, Scissors. Good bye!"
-  end
-
-  def display_moves
-    puts "#{human.name} chose #{human.move}"
-    puts "#{computer.name} chose #{computer.move}"
-  end
-
-  def display_round_winner
-    if human.move > computer.move
-      puts "#{human.name} won!"
-      human.win_count += 1
-    elsif human.move < computer.move
-      puts "#{computer.name} won!"
-      computer.win_count += 1
-    else
-      puts "It's a tie!"
-    end
-  end
-
-  def display_win_count
-    puts "#{human.name} has #{human.win_count} wins"
-    puts "#{computer.name} has #{computer.win_count} wins"
-  end
-
-  def display_game_winner
-    puts "#{human.name} wins!" if human.win_count >= win_requirement
-    puts "#{computer.name} wins!" if computer.win_count >= win_requirement
+  def self.get_computer_name
+    @@name
   end
 
   def reset_wins
@@ -425,56 +544,30 @@ class RPSGame
     computer.win_count = 0
   end 
 
-  def play_again
-    answer = nil
-    loop do
-      puts "Would you like to play again? (y/n)"
-      answer = gets.chomp.downcase
-      break if %w(y n w).include?(answer)
-      puts "Sorry, must be y, n, or w."
-    end
-
-    case answer
-    when 'y' then play
-    when 'n' then display_goodbye_message 
-    when 'w' then change_win_requirement
-    end
-  end
-
-  def change_win_requirement
-    answer = nil
-    loop do
-      puts 'How many games until a winner?'
-      answer = gets.chomp
-      break if answer.to_i >= 0
-      puts 'Please enter a valid number'
-    end
-
-    self.win_requirement = answer.to_i
+  def pregame
     display_welcome_message
+    get_pregame_input
   end
 
-  def someone_won?
-    (human.win_count >= win_requirement) ||
-    computer.win_count >= win_requirement
+  def game
+    human.choose
+    computer.choose
+    display_moves
+    display_round_winner
+    display_win_count
   end
-
-  def play
-    until someone_won?
-      binding.pry
-      human.choose
-      computer.choose
-      display_moves
-      display_round_winner
-      display_win_count
-    end
-
+  
+  def postgame
     display_game_winner
     reset_wins
     play_again
-
   end
-end
 
-# Start an "engine"
-RPSGame.new.play
+  def play
+    pregame
+    game until someone_won?
+    postgame
+  end
+end 
+
+RPSLSGame.new.play

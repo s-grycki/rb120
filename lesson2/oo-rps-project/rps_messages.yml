@@ -1,0 +1,34 @@
+bios:
+  R2D2: "R2D2 is the widely known and loved droid from Star wars. How does he play this game without any hands? It's actually utilized with R2's ability to project holograms outwards."
+  Hal: "You may remember Hal as the whimsical dad from the American sitcom Malcolm in the Middle. He has recurring dreams where he shaves his head and makes a living off illicit activities in New Mexico."
+  Chappie: "Daniel 'Chappie' James Jr. became the first African American four-star general in 1975. His nickname was handed down to him by his brother. Chappie lived until 1978 at the age of 58."
+  Sonny: "Sonny Capone is the son of famous American mobster Al Capone - who ruled a crime empire in Chicago. Unlike his father, Sonny, who changed his name later in life, lived a relatively quiet and drama-free life until his death at age 85 in the year 2004."
+  Number5: "Number 5 was a star character in a Cartoon Network show called Codename Kid's Next Door. Though she prefers going by this codename most of the time, her real name is Abby."
+
+rules: |
+    Rock, Paper, Scissors, Lizard, Spock is a two-player game where each player
+    chooses one of five possible moves: rock, paper, scissors, lizard or spock.
+    The chosen moves will then be compared to see who wins a round,
+    according to the following rules:
+
+    - rock beats scissors & lizard
+    - scissors beats paper & lizard
+    - paper beats rock & spock
+    - lizard beats spock & paper
+    - spock beats scissors & rock
+
+    If the players chose the same move, then it's a tie. The first player to a set
+    score wins the game
+
+    Before or after the game, the user can view the player bios of the computer
+    players and change the default game win target
+    (b/bios) for character bios
+    (w/wins) for win target
+
+    During the game, users can view the move history of both players and use a
+    shortcut to select their last choice
+    (h/history) for move history
+
+    At any time, a user can view the time or rules of the game
+    (t/time) for current time
+    (ru/rules) for rules
