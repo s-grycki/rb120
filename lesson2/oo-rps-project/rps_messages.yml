@@ -6,29 +6,32 @@ bios:
   Number5: "Number 5 was a star character in a Cartoon Network show called Codename Kid's Next Door. Though she prefers going by this codename most of the time, her real name is Abby."
 
 rules: |
+    <================================== Summary ==================================>
     Rock, Paper, Scissors, Lizard, Spock is a two-player game where each player
     chooses one of five possible moves: rock, paper, scissors, lizard or spock.
-    The chosen moves will then be compared to see who wins a round,
-    according to the following rules:
 
-    - rock beats scissors & lizard
-    - scissors beats paper & lizard
-    - paper beats rock & spock
-    - lizard beats spock & paper
-    - spock beats scissors & rock
+    <================================== Conditions ==================================>
+    - Rock beats scissors & lizard
+    - Scissors beats paper & lizard
+    - Paper beats rock & spock
+    - Lizard beats spock & paper
+    - Spock beats scissors & rock
 
-    If the players chose the same move, then it's a tie. The first player to a set
-    score wins the game
-
-    Before or after the game, the user can view the player bios of the computer
-    players and change the default game win target
-    (b/bios) for character bios
-    (w/wins) for win target
-
-    During the game, users can view the move history of both players and use a
-    shortcut to select their last choice
-    (h/history) for move history
-
-    At any time, a user can view the time or rules of the game
-    (t/time) for current time
+    <================================== Options ==================================>
     (ru/rules) for rules
+    (t/time) for current time
+    (w/wins) to change win requirement *Disabled during gameplay*
+    (b/bios) to view character bio
+    (h/history) to view move history
+    (c/clear) to clear move history
+
+pregame: |
+      Please enter (rules/ru) to see the game rules and options
+      Press any other key to begin game
+
+moves:
+  rock: ['scissors', 'lizard']
+  paper: ['rock', 'spock']
+  scissors: ['paper', 'lizard']
+  lizard: ['paper', 'spock']
+  spock: ['rock', 'scissors']
