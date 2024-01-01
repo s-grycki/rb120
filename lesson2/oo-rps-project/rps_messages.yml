@@ -21,7 +21,7 @@ rules: |
     (ru/rules) for rules
     (t/time) for current time
     (w/wins) to change win requirement *Disabled during gameplay*
-    (b/bios) to view character bio
+    (b/bio) to view character bio
     (h/history) to view move history
     (c/clear) to clear move history
 
